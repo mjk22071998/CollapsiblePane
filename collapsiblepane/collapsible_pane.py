@@ -1,172 +1,353 @@
-from PySide6.QtCore import Qt, QPropertyAnimation, QParallelAnimationGroup, QAbstractAnimation, Signal, QEasingCurve
-from PySide6.QtWidgets import (
-    QWidget, QToolButton, QScrollArea, QGridLayout, QSizePolicy
+from typing import Optional, Union
+from PySide6.QtCore import (
+    Qt, QPropertyAnimation, QParallelAnimationGroup,
+    QAbstractAnimation, QEasingCurve, QRect, Signal
 )
+from PySide6.QtWidgets import (
+    QWidget, QScrollArea, QGridLayout, QSizePolicy,
+    QGraphicsOpacityEffect, QFrame, QLabel,
+    QHBoxLayout, QGraphicsDropShadowEffect
+)
+from PySide6.QtGui import QColor, QIcon
 
 
 class CollapsiblePane(QWidget):
-    toggled = Signal(bool)
+    toggled: Signal = Signal(bool)
 
-    def __init__(self, title="", animation_duration=100, parent=None):
+    def __init__(self, title: str = "", animation_duration: int = 150, parent: Optional[QWidget] = None):
         super().__init__(parent)
+        self.animation_duration: int = animation_duration
+        self._expanded: bool = False
+        self._use_qicon: bool = False
+        self._collapsed_icon: Union[str, QIcon] = "▸"
+        self._expanded_icon: Union[str, QIcon] = "▾"
 
-        self.animation_duration = animation_duration
+        # --- Header Frame ---
+        self.header_frame: QFrame = QFrame(self)
+        self.header_frame.setObjectName("header_frame")
+        self.header_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.header_frame.setCursor(Qt.PointingHandCursor)
+        self.header_frame.setAutoFillBackground(True)
 
-        self.toggle_button = QToolButton(self)
-        self.toggle_animation = QParallelAnimationGroup(self)
-        self.content_area = QScrollArea(self)
-        self.main_layout = QGridLayout(self)
+        self.header_layout: QHBoxLayout = QHBoxLayout(self.header_frame)
+        self.header_layout.setContentsMargins(10, 4, 10, 4)
+        self.header_layout.setSpacing(8)
 
-        # Toggle button setup
-        self.toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.toggle_button.setArrowType(Qt.RightArrow)
-        self.toggle_button.setText(title)
-        self.toggle_button.setCheckable(True)
-        self.toggle_button.setChecked(False)
-        self.toggle_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.toggle_button.setStyleSheet(self._generate_button_style("#444", "#eee"))
+        self.chevron_label: QLabel = QLabel(self._collapsed_icon)
+        self.chevron_label.setStyleSheet("font-size: 18px; font-weight: bold;")
 
-        # Content area setup
+        self.title_label: QLabel = QLabel(title)
+        self.title_label.setStyleSheet("font-size: 14px; font-weight: 600; color: white;")
+
+        self.count_label: QLabel = QLabel("")
+        self.count_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.count_label.setStyleSheet("""
+            QLabel {
+                background-color: rgba(255,255,255,0.2);
+                color: white;
+                border-radius: 10px;
+                padding: 2px 6px;
+                font-size: 12px;
+            }
+        """)
+
+        self.header_layout.addWidget(self.chevron_label)
+        self.header_layout.addWidget(self.title_label)
+        self.header_layout.addStretch()
+        self.header_layout.addWidget(self.count_label)
+
+        self.header_frame.setStyleSheet("""
+            QFrame#header_frame {
+                background-color: #28a745;
+                border-radius: 8px;
+            }
+        """)
+
+        # --- Content Area ---
+        self.content_area: QScrollArea = QScrollArea(self)
         self.content_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.content_area.setMaximumHeight(0)
         self.content_area.setMinimumHeight(0)
-        self.content_area.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
         self.content_area.setWidgetResizable(True)
+        self.content_area.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
 
-        # Animations
+        # --- Fade opacity effect ---
+        self.opacity_effect: QGraphicsOpacityEffect = QGraphicsOpacityEffect(self.content_area)
+        self.content_area.setGraphicsEffect(self.opacity_effect)
+        self.opacity_animation: QPropertyAnimation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.opacity_animation.setDuration(self.animation_duration)
+
+        # --- Main Layout ---
+        self.main_layout: QGridLayout = QGridLayout(self)
+        self.main_layout.setVerticalSpacing(0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.addWidget(self.header_frame, 0, 0)
+        self.main_layout.addWidget(self.content_area, 1, 0)
+
+        # --- Animations ---
+        self.toggle_animation: QParallelAnimationGroup = QParallelAnimationGroup(self)
         self.toggle_animation.addAnimation(QPropertyAnimation(self, b"minimumHeight"))
         self.toggle_animation.addAnimation(QPropertyAnimation(self, b"maximumHeight"))
         self.toggle_animation.addAnimation(QPropertyAnimation(self.content_area, b"maximumHeight"))
+        self.toggle_animation.addAnimation(self.opacity_animation)
 
-        # Layout setup
-        self.main_layout.setVerticalSpacing(0)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.addWidget(self.toggle_button, 0, 0)
-        self.main_layout.addWidget(self.content_area, 1, 0)
-        self.setLayout(self.main_layout)
+        # --- Click handler ---
+        self.header_frame.mousePressEvent = lambda e: self.toggle(not self._expanded)
 
-        self.toggle_button.toggled.connect(self.toggle)
+        # --- Header children ---
+        self.chevron_label.setAttribute(Qt.WA_TranslucentBackground)
+        self.title_label.setAttribute(Qt.WA_TranslucentBackground)
 
-    def _generate_button_style(self, bg_color: str="#0066ff", fg_color: str="#ffffff") -> str:
-        return f"""
-        QToolButton {{
-            background-color: {bg_color};
-            color: {fg_color};
-            border: none;
-            padding: 6px;
-            font-weight: bold;
-        }}
-        QToolButton::menu-indicator {{ image: none; }}
-        """
-
-    def clear_widget(self):
+    # -------------------------------------------------------------------------
+    # Content and header management
+    # -------------------------------------------------------------------------
+    def set_content_widget(self, widget: QWidget) -> None:
+        """Attach content widget inside the collapsible area."""
         if self.content_area.widget():
             old = self.content_area.widget()
             self.content_area.takeWidget()
             old.deleteLater()
+        self.content_area.setWidget(widget)
+        widget.adjustSize()
 
-        # Reset animation values so the pane collapses properly
-        collapsed_height = self.sizeHint().height() - self.content_area.maximumHeight()
+    def set_title(self, title: str) -> None:
+        self.title_label.setText(title)
 
-        for i in range(self.toggle_animation.animationCount() - 1):
-            animation = self.toggle_animation.animationAt(i)
-            animation.setStartValue(collapsed_height)
-            animation.setEndValue(collapsed_height)
-            animation.setEasingCurve(QEasingCurve.OutCubic)
-
-        content_anim = self.toggle_animation.animationAt(self.toggle_animation.animationCount() - 1)
-        content_anim.setStartValue(0)
-        content_anim.setEndValue(0)
-
-        # Also collapse the pane visually
-        self.content_area.setMaximumHeight(0)
-
-    def set_content_style(self, background_color="#ffffff", border_color="#cccccc", border_width=1, border_style="solid"):
-        self.content_area.setStyleSheet(f"""
-        QScrollArea {{
-            background-color: {background_color};
-            border: {border_width}px {border_style} {border_color};
-            border-radius: 4px;
+    def set_header_style(
+        self,
+        background_color: str = "#28a745",
+        text_color: str = "white",
+        border_color: str = "transparent",
+        border_width: int = 0,
+        border_radius: int = 8,
+        padding_vertical: int = 6,
+        padding_horizontal: int = 10,
+        font_size: int = 14,
+        font_weight: str = "600",
+        hover_color: Optional[str] = None
+    ) -> None:
+        """Customize the header look dynamically."""
+        hover_block = f"""
+        QFrame#header_frame:hover {{
+            background-color: {hover_color};
         }}
+        """ if hover_color else ""
+
+        self.header_frame.setStyleSheet(f"""
+            QFrame#header_frame {{
+                background-color: {background_color};
+                border: {border_width}px solid {border_color};
+                border-radius: {border_radius}px;
+                padding: {padding_vertical}px {padding_horizontal}px;
+                background-clip: border;
+            }}
+            {hover_block}
         """)
 
-    def set_title_bar_style(self, background_color: str, foreground_color: str):
-        self.toggle_button.setStyleSheet(
-            self._generate_button_style(background_color, foreground_color)
+        self.title_label.setStyleSheet(
+            f"color: {text_color}; font-size: {font_size}px; font-weight: {font_weight};"
         )
 
-    @property
-    def content_widget(self) -> QWidget:
-        return self.content_area.widget()
+    # -------------------------------------------------------------------------
+    # Chevron / Icon customization
+    # -------------------------------------------------------------------------
+    def set_chevron_icons(self, collapsed_icon: Union[str, QIcon], expanded_icon: Union[str, QIcon]) -> None:
+        """Set custom icons or text for the chevron."""
+        image_exts = (".svg", ".png", ".jpg", ".jpeg", ".bmp", ".ico")
 
-    @content_widget.setter
-    def content_widget(self, widget: QWidget):
-        # Remove old widget if any
-        if self.content_area.widget() is widget:
-            return  # No need to do anything
+        if isinstance(collapsed_icon, QIcon) and isinstance(expanded_icon, QIcon):
+            self._use_qicon = True
+            self._collapsed_icon = collapsed_icon
+            self._expanded_icon = expanded_icon
+            self.chevron_label.setPixmap(collapsed_icon.pixmap(16, 16))
 
-        if self.content_area.widget():
-            old_widget = self.content_area.widget()
-            old_widget.setParent(None)
+        elif isinstance(collapsed_icon, str) and collapsed_icon.lower().endswith(image_exts):
+            self._use_qicon = True
+            self._collapsed_icon = QIcon(collapsed_icon)
+            self._expanded_icon = QIcon(expanded_icon)
+            self.chevron_label.setPixmap(self._collapsed_icon.pixmap(16, 16))
 
-        self.content_area.setWidget(widget)
-
-        collapsed_height = self.sizeHint().height() - self.content_area.maximumHeight()
-        content_height = widget.sizeHint().height()
-
-        for i in range(self.toggle_animation.animationCount() - 1):
-            animation = self.toggle_animation.animationAt(i)
-            animation.setDuration(self.animation_duration)
-            animation.setStartValue(collapsed_height)
-            animation.setEndValue(collapsed_height + content_height)
-            animation.setEasingCurve(QEasingCurve.OutCubic)
-
-        content_anim = self.toggle_animation.animationAt(self.toggle_animation.animationCount() - 1)
-        content_anim.setDuration(self.animation_duration)
-        content_anim.setStartValue(0)
-        content_anim.setEndValue(content_height)
-
-    @property
-    def is_expanded(self):
-        return self.toggle_button.isChecked()
-
-    def toggle(self, collapsed: bool):
-        self.toggled.emit(collapsed)
-
-        if collapsed:
-            self.toggle_button.setArrowType(Qt.DownArrow)
         else:
-            self.toggle_button.setArrowType(Qt.RightArrow)
+            self._use_qicon = False
+            self._collapsed_icon = collapsed_icon
+            self._expanded_icon = expanded_icon
+            self.chevron_label.setText(self._collapsed_icon)
 
-        # If there's no content widget, skip animation
+    # -------------------------------------------------------------------------
+    # Styling helpers
+    # -------------------------------------------------------------------------
+    def set_card_style(self, background: str = "#ffffff", border: str = "#00000020",
+                       radius: int = 8, padding: int = 8, shadow_only: bool = False) -> None:
+        """Customize expanded area style dynamically."""
+        if shadow_only:
+            self.content_area.setAutoFillBackground(True)
+            self.content_area.setAttribute(Qt.WA_TranslucentBackground, True)
+
+        self._card_style = f"""
+            QScrollArea{{
+                background-color: {background};
+                border: 1px solid {border};
+                border-radius: {radius}px;
+                padding: {padding}px;
+            }}
+        """
+        self.content_area.setStyleSheet(self._card_style)
+
+    def set_card_shadow(self, color: str = "#000000", blur: int = 20, offset_y: int = 4) -> None:
+        """Add a drop shadow under the expanded content."""
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(blur)
+        shadow.setOffset(0, offset_y)
+        shadow.setColor(QColor(color))
+        self.content_area.setGraphicsEffect(shadow)
+
+    def set_content_text_style(self, color: str = "#333333", font_size: int = 13) -> None:
+        """Change default text styling for the content area."""
+        self._text_style = f"color: {color}; font-size: {font_size}px;"
         content = self.content_area.widget()
-        if content is None:
-            self.content_area.setMaximumHeight(0)
+        if content:
+            content.setStyleSheet(self._text_style)
+
+    def set_title_style(self, color: str = "#FFFFFF", font_size: int = 14,
+                        font_weight: str = "600", italic: bool = False) -> None:
+        """Style the title text dynamically."""
+        style = f"""
+            color: {color};
+            font-size: {font_size}px;
+            font-weight: {font_weight};
+            {'font-style: italic;' if italic else ''}
+        """
+        self.title_label.setStyleSheet(style)
+
+    def set_item_count(self, count: Optional[int], show_badge: bool = True) -> None:
+        """Display an item count badge."""
+        if count is None or not show_badge:
+            self.count_label.setText("")
+            self.count_label.setStyleSheet("")
             return
 
-        # Compute heights for animation
-        collapsed_height = self.toggle_button.sizeHint().height()
+        self.count_label.setText(f"Items: {count}")
+        self.set_item_badge_style()
+
+    def set_item_badge_style(
+        self,
+        text: Optional[str] = None,
+        bg_color: str = "rgba(0,120,215,0.15)",
+        text_color: str = "#0078d7",
+        border_color: str = "rgba(0,120,215,0.5)",
+        border_radius: int = 8,
+        padding_vertical: int = 2,
+        padding_horizontal: int = 10,
+        font_size: int = 12,
+        font_weight: str = "600",
+        shadow: bool = False,
+        min_width: int = 28
+    ) -> None:
+        """Dynamically style the badge (count label)."""
+        if text is not None:
+            self.count_label.setText(str(text))
+
+        self.count_label.setAutoFillBackground(True)
+        self.count_label.setAttribute(Qt.WA_TranslucentBackground, False)
+
+        style = f"""
+            QLabel {{
+                background-color: {bg_color};
+                color: {text_color};
+                border-radius: {border_radius}px;
+                border: 1px solid {border_color};
+                padding: {padding_vertical}px {padding_horizontal}px;
+                font-size: {font_size}px;
+                font-weight: {font_weight};
+                min-width: {min_width}px;
+                text-align: center;
+                qproperty-alignment: AlignCenter;
+            }}
+        """
+        self.count_label.setStyleSheet(style)
+
+        if shadow:
+            shadow_effect = QGraphicsDropShadowEffect(self.count_label)
+            shadow_effect.setBlurRadius(10)
+            shadow_effect.setOffset(0, 2)
+            shadow_effect.setColor(QColor(0, 0, 0, 40))
+            self.count_label.setGraphicsEffect(shadow_effect)
+        else:
+            self.count_label.setGraphicsEffect(None)
+
+    # -------------------------------------------------------------------------
+    # Behavior controls
+    # -------------------------------------------------------------------------
+    def set_collapsed(self, collapsed: bool = True) -> None:
+        """Force collapse/expand without animation."""
+        self._expanded = not collapsed
+        if collapsed:
+            self.content_area.setMaximumHeight(0)
+            self.setMaximumHeight(self.header_frame.sizeHint().height())
+            self.chevron_label.setText(self._collapsed_icon if not self._use_qicon else "")
+        else:
+            content = self.content_area.widget()
+            if content:
+                content_height = content.sizeHint().height()
+                self.content_area.setMaximumHeight(content_height)
+                self.setMaximumHeight(self.header_frame.sizeHint().height() + content_height)
+            self.chevron_label.setText(self._expanded_icon if not self._use_qicon else "")
+
+    # -------------------------------------------------------------------------
+    # Animation toggle
+    # -------------------------------------------------------------------------
+    def toggle(self, expand: bool) -> None:
+        """Animate expanding or collapsing."""
+        if self._expanded == expand:
+            return
+        self._expanded = expand
+        self.toggled.emit(expand)
+
+        if self._use_qicon:
+            icon = self._expanded_icon if expand else self._collapsed_icon
+            if isinstance(icon, QIcon):
+                self.chevron_label.setPixmap(icon.pixmap(16, 16))
+        else:
+            self.chevron_label.setText(self._expanded_icon if expand else self._collapsed_icon)
+
+        content = self.content_area.widget()
+        if not content:
+            return
+
+        content.adjustSize()
         content_height = content.sizeHint().height()
+        collapsed_height = self.header_frame.sizeHint().height()
 
         for i in range(self.toggle_animation.animationCount() - 1):
             anim = self.toggle_animation.animationAt(i)
             anim.setStartValue(collapsed_height)
             anim.setEndValue(collapsed_height + content_height)
+            anim.setDuration(self.animation_duration)
             anim.setEasingCurve(QEasingCurve.OutCubic)
 
         content_anim = self.toggle_animation.animationAt(self.toggle_animation.animationCount() - 1)
         content_anim.setStartValue(0)
         content_anim.setEndValue(content_height)
+        content_anim.setDuration(self.animation_duration)
+        content_anim.setEasingCurve(QEasingCurve.OutCubic)
 
-        # Animate
-        if self.toggle_animation.state() == QAbstractAnimation.Running:
-            self.toggle_animation.setDirection(
-                QAbstractAnimation.Backward if self.toggle_animation.direction() == QAbstractAnimation.Forward else QAbstractAnimation.Forward
-            )
-        else:
-            self.toggle_animation.setDirection(
-                QAbstractAnimation.Forward if collapsed else QAbstractAnimation.Backward
-            )
+        self.opacity_animation.setStartValue(0.0 if expand else 1.0)
+        self.opacity_animation.setEndValue(1.0 if expand else 0.0)
 
+        direction = QAbstractAnimation.Forward if expand else QAbstractAnimation.Backward
+        self.toggle_animation.setDirection(direction)
         self.toggle_animation.start()
 
+        try:
+            self.toggle_animation.finished.disconnect()
+        except TypeError:
+            pass
+
+        def on_finished() -> None:
+            if not expand:
+                self.content_area.setMaximumHeight(0)
+                self.setMaximumHeight(collapsed_height)
+            else:
+                self.content_area.setMaximumHeight(content_height)
+
+        self.toggle_animation.finished.connect(on_finished)
