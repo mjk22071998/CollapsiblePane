@@ -193,6 +193,23 @@ CollapsiblePane(title="", animation_duration=100)
 
 ---
 
+## Changelog
+
+* Added full header customization (`set_header_style`)
+* Added chevron icon customization (`set_chevron_icons`)
+* Added card-style content area (`set_card_style`)
+* Added item count badges with styling API
+* Added title-level text customization
+* Added content text styling
+* Added programmatic expand/collapse methods
+* Added `set_content_widget()` API
+* Added initial collapsed state support
+
+**New Contributor:**
+
+* **[Muhammad Awais Saleem](https://github.com/mawaissaleem)**
+
+---
 ## Contributions
 For contributions please visit [Github Repository](https://github.com/mjk22071998/CollapsiblePane)
 
