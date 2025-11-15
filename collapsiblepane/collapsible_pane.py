@@ -16,6 +16,7 @@ class CollapsiblePane(QWidget):
 
     def __init__(self, title: str = "", animation_duration: int = 150, parent: Optional[QWidget] = None):
         super().__init__(parent)
+        self._text_style = ""
         self.animation_duration: int = animation_duration
         self._expanded: bool = False
         self._use_qicon: bool = False

@@ -66,9 +66,15 @@ class Window(QMainWindow):
         content_layout.setSpacing(8)
 
         # User input fields
-        content_layout.addWidget(QLabel("Enter your details:"))
-        content_layout.addWidget(QLineEdit("Name here..."))
-        content_layout.addWidget(QLineEdit("Email address..."))
+        details_edit = QLineEdit()
+        details_edit.setPlaceholderText("Details here...")
+        content_layout.addWidget(details_edit)
+        name_edit=QLineEdit()
+        name_edit.setPlaceholderText("Name here...")
+        content_layout.addWidget(name_edit)
+        email_edit = QLineEdit()
+        email_edit.setPlaceholderText("Email here...")
+        content_layout.addWidget(email_edit)
 
         # Category selection
         content_layout.addWidget(QLabel("Select a category:"))
@@ -114,11 +120,6 @@ class Window(QMainWindow):
         container = QWidget()
         main_layout = QVBoxLayout(container)
         main_layout.addWidget(section)
-
-        # Additional controls
-        clear_button = QPushButton("Clear Section")
-        clear_button.clicked.connect(text_edit.clear)
-        main_layout.addWidget(clear_button)
 
         toggle_button = QPushButton("Toggle Section")
         toggle_button.clicked.connect(lambda: section.toggle(not section._expanded))
