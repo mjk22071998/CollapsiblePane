@@ -23,9 +23,6 @@ class Window(QMainWindow):
             text_color="#FFFFFF",         # White text for contrast
             border_color="#1c7c1c",      # Darker green border
             border_width=2,
-            border_radius=12,
-            padding_vertical=8,
-            padding_horizontal=14,
             font_size=16,
             font_weight="bold",
             hover_color="#32cd32"        # Lighter green hover
@@ -58,7 +55,7 @@ class Window(QMainWindow):
         )
 
         # --- Title style ---
-        section.set_title_style(color="#2e7d32", font_size=18, font_weight="700", italic=True)
+        section.set_title_style(color="#ffffff", font_weight="bold", italic=False)
 
         # --- Content text style ---
         section.set_content_text_style(color="#333333", font_size=14)

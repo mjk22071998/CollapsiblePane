@@ -37,7 +37,7 @@ class CollapsiblePane(QWidget):
         self.chevron_label.setStyleSheet("font-size: 18px; font-weight: bold;")
 
         self.title_label: QLabel = QLabel(title)
-        self.title_label.setStyleSheet("font-size: 14px; font-weight: 600; color: white;")
+        self.title_label.setStyleSheet("QLabel{font-size: 14px; font-weight: 600; color: white;}")
 
         self.count_label: QLabel = QLabel("")
         self.count_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -119,9 +119,9 @@ class CollapsiblePane(QWidget):
         text_color: str = "white",
         border_color: str = "transparent",
         border_width: int = 0,
-        border_radius: int = 8,
-        padding_vertical: int = 6,
-        padding_horizontal: int = 10,
+        border_radius: int = 0,
+        padding_vertical: int = 0,
+        padding_horizontal: int = 0,
         font_size: int = 14,
         font_weight: str = "600",
         hover_color: Optional[str] = None
@@ -177,7 +177,7 @@ class CollapsiblePane(QWidget):
     # Styling helpers
     # -------------------------------------------------------------------------
     def set_card_style(self, background: str = "#ffffff", border: str = "#00000020",
-                       radius: int = 8, padding: int = 8, shadow_only: bool = False) -> None:
+                       radius: int = 0, padding: int = 0, shadow_only: bool = False) -> None:
         """Customize expanded area style dynamically."""
         if shadow_only:
             self.content_area.setAutoFillBackground(True)
@@ -236,8 +236,8 @@ class CollapsiblePane(QWidget):
         text_color: str = "#0078d7",
         border_color: str = "rgba(0,120,215,0.5)",
         border_radius: int = 8,
-        padding_vertical: int = 2,
-        padding_horizontal: int = 10,
+        padding_vertical: int = 0,
+        padding_horizontal: int = 0,
         font_size: int = 12,
         font_weight: str = "600",
         shadow: bool = False,
