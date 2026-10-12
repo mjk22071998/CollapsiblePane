@@ -1,215 +1,228 @@
-# CollapsiblePane (PySide6) [![PyPI Downloads](https://static.pepy.tech/badge/collapsiblepane)](https://pepy.tech/projects/collapsiblepane)
+# CollapsiblePane (PySide6)
 
-The `CollapsiblePane` is a reusable and customizable PySide6 widget that allows users to toggle the visibility of a content area with smooth animations—perfect for organizing UI sections. It mimics JavaFX’s `TitledPane` behavior and is designed to cleanly encapsulate widgets within collapsible sections.
+[![PyPI Version](https://img.shields.io/pypi/v/collapsiblepane.svg)](https://pypi.org/project/collapsiblepane/)
+[![PyPI Downloads](https://static.pepy.tech/badge/collapsiblepane)](https://pepy.tech/projects/collapsiblepane)
+[![Python Versions](https://img.shields.io/pypi/pyversions/collapsiblepane.svg)](https://pypi.org/project/collapsiblepane/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Inspired by JavaFX's TitledPane.
+A sleek, customizable, and animated collapsible container widget for **PySide6**, inspired by JavaFX's `TitledPane`. It wraps child widgets cleanly with smooth height & opacity transitions, customizable headers, badges, drop shadows, and chevron controls.
 
 ---
 
 ## Features
 
-- Expand/Collapse content with animation
-- Fully customizable title bar and content styling
-- Add or replace content widgets easily
-- Clean, layout-friendly design
-- Signal support for toggled state
+- **Smooth Animated Transitions**: Expanding and collapsing with configurable duration, cubic easing, and opacity fading.
+- **Interruptible Animations**: Mid-flight reverse transitions smoothly from the current height without jumping or flickering.
+- **Customizable Header**: Set background color, text color, border, padding, hover styles, and fonts.
+- **Customizable Chevron / Icons**: Supports Unicode glyphs (e.g., `▸`, `▾`) and image icons (`.svg`, `.png`, `QIcon`).
+- **Card-Style Container**: Rounded borders, background fills, and drop shadows on the collapsible card.
+- **Badge / Item Count Support**: Built-in counter or status badge with pill styling and shadows.
+- **Pythonic Properties**: Intuitive access via `is_expanded`, `content_widget`, and `title`.
+- **Qt Signals**: Emits `toggled(bool)` whenever the pane expands or collapses.
 
 ---
 
-## Usage
+## Installation
+
+```bash
+pip install collapsiblepane
+```
+
+---
+
+## Screenshots
+
+| Collapsed View | Expanded View |
+| :---: | :---: |
+| ![Collapsed View](https://raw.githubusercontent.com/mjk22071998/CollapsiblePane/refs/heads/main/screenshot/collapsed.PNG) | ![Expanded View](https://raw.githubusercontent.com/mjk22071998/CollapsiblePane/refs/heads/main/screenshot/expanded.PNG) |
+
+---
+
+## Quick Start
 
 ```python
 import sys
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit,
-    QComboBox, QCheckBox, QRadioButton, QSlider, QProgressBar,
-    QSpinBox, QDateEdit, QTextEdit, QPushButton
-)
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit
 from collapsiblepane import CollapsiblePane
 
-
-class Window(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CollapsiblePane – Full Customization Demo")
-        self.resize(600, 700)
+        self.setWindowTitle("CollapsiblePane Demo")
+        self.resize(500, 400)
 
-        # --- Collapsible Section ---
-        section = CollapsiblePane("User Details", animation_duration=400)
+        # 1. Create the pane
+        pane = CollapsiblePane("User Details", animation_duration=220)
 
-        # --- Header customization ---
-        section.set_header_style(
-            background_color="#28a745",  # Green header
-            text_color="#FFFFFF",         # White text for contrast
-            border_color="#1c7c1c",      # Darker green border
-            border_width=2,
-            font_size=16,
-            font_weight="bold",
-            hover_color="#32cd32"        # Lighter green hover
+        # 2. Style via modern presets or custom code
+        pane.set_header_style(
+            background_color="#1e293b",
+            text_color="#f8fafc",
+            hover_color="#283548",
+            border_color="#334155",
+            border_radius=8
         )
+        pane.set_card_style(background="#0f172a", border="#1e293b", radius=8, padding=12)
+        pane.set_item_count(12)
 
-        # --- Chevron customization ---
-        section.set_chevron_icons("▸", "▾")
+        # 3. Create content widget
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.addWidget(QLabel("Name:"))
+        layout.addWidget(QLineEdit())
+        layout.addWidget(QPushButton("Save"))
 
-        # --- Card content style ---
-        section.set_card_style(
-            background="#f0fdf4",  # Soft light green background
-            border="#28a74533",    # Subtle green border
-            radius=10,
-            padding=12
-        )
+        pane.set_content_widget(content)
 
-        # --- Item count badge ---
-        section.set_item_count(23)
-        section.set_item_badge_style(
-            bg_color="#ffd6e0",     # Light pink
-            text_color="#e91e63",   # Dark pink text
-            border_color="#ff80ab", # Matching border
-            border_radius=12,
-            padding_vertical=4,
-            padding_horizontal=12,
-            font_size=12,
-            font_weight="bold",
-            shadow=True,
-            min_width=40
-        )
-
-        # --- Title style ---
-        section.set_title_style(color="#ffffff", font_weight="bold", italic=False)
-
-        # --- Content text style ---
-        section.set_content_text_style(color="#333333", font_size=14)
-
-        # --- Content Widget ---
-        content_widget = QWidget()
-        content_layout = QVBoxLayout(content_widget)
-        content_layout.setSpacing(8)
-
-        # User input fields
-        details_edit = QLineEdit()
-        details_edit.setPlaceholderText("Details here...")
-        content_layout.addWidget(details_edit)
-        name_edit=QLineEdit()
-        name_edit.setPlaceholderText("Name here...")
-        content_layout.addWidget(name_edit)
-        email_edit = QLineEdit()
-        email_edit.setPlaceholderText("Email here...")
-        content_layout.addWidget(email_edit)
-
-        # Category selection
-        content_layout.addWidget(QLabel("Select a category:"))
-        combo = QComboBox()
-        combo.addItems(["Developer", "Designer", "Security Researcher", "Engineer"])
-        content_layout.addWidget(combo)
-
-        # Preferences
-        content_layout.addWidget(QCheckBox("Subscribe to newsletter"))
-        content_layout.addWidget(QRadioButton("Light Mode"))
-        content_layout.addWidget(QRadioButton("Dark Mode"))
-
-        # Volume and progress
-        content_layout.addWidget(QLabel("Volume:"))
-        slider = QSlider(Qt.Horizontal)
-        slider.setValue(40)
-        content_layout.addWidget(slider)
-
-        progress = QProgressBar()
-        progress.setValue(70)
-        content_layout.addWidget(progress)
-
-        # Additional inputs
-        content_layout.addWidget(QSpinBox())
-        content_layout.addWidget(QDateEdit())
-
-        # Bio
-        content_layout.addWidget(QLabel("Bio:"))
-        text_edit = QTextEdit()
-        text_edit.setPlaceholderText("Tell us about yourself...")
-        content_layout.addWidget(text_edit)
-
-        # Submit button
-        content_layout.addWidget(QPushButton("Submit"))
-
-        # Set the content widget
-        section.set_content_widget(content_widget)
-
-        # Force collapsed initially
-        section.set_collapsed(collapsed=True)
-
-        # --- Layout Setup ---
+        # 4. Add to window layout
         container = QWidget()
         main_layout = QVBoxLayout(container)
-        main_layout.addWidget(section)
-
-        toggle_button = QPushButton("Toggle Section")
-        toggle_button.clicked.connect(lambda: section.toggle(not section._expanded))
-        main_layout.addWidget(toggle_button)
-
+        main_layout.addWidget(pane)
         main_layout.addStretch()
         self.setCentralWidget(container)
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = Window()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
 ```
 
 ---
 
-## Screenshot
-
-| Collapsed                                                                                                                 | Expanded |
-|---------------------------------------------------------------------------------------------------------------------------| -------- |
-| ![Collapsed View](https://raw.githubusercontent.com/mjk22071998/CollapsiblePane/refs/heads/main/screenshot/collapsed.PNG) |![Expanded View](https://raw.githubusercontent.com/mjk22071998/CollapsiblePane/refs/heads/main/screenshot/expanded.PNG)|
-
-
----
-
-## API Overview
+## API Reference
 
 ### Constructor
 
 ```python
-CollapsiblePane(title="", animation_duration=100)
+CollapsiblePane(title: str = "", animation_duration: int = 150, parent: Optional[QWidget] = None)
 ```
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `title` | `str` | `""` | Initial header title. |
+| `animation_duration` | `int` | `150` | Duration of expand/collapse animation in milliseconds. |
+| `parent` | `Optional[QWidget]` | `None` | Parent Qt widget. |
+
+---
 
 ### Properties
 
-- `content_widget`: `QWidget`
-- `is_expanded`: `bool`
+| Property | Type | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `is_expanded` | `bool` | `get / set` | Whether the pane is currently expanded. Setting this animates the change. |
+| `content_widget` | `Optional[QWidget]` | `get` | Returns the currently attached content widget. |
+| `title` | `str` | `get / set` | Header title string. |
+
+---
 
 ### Methods
 
-- `clear_widget()`
-- `set_content_style(background_color, border_color, ...)`
-- `set_title_bar_style(background_color, foreground_color)`
+#### State & Content
+* **`toggle(expand: bool) -> None`**
+  Animates expanding (`True`) or collapsing (`False`).
+* **`set_collapsed(collapsed: bool = True) -> None`**
+  Instantly sets collapsed (`True`) or expanded (`False`) without animation.
+* **`set_content_widget(widget: QWidget) -> None`**
+  Attaches `widget` to the content area, deleting any previous content widget.
+* **`clear_widget() -> None`**
+  Removes and deletes the current content widget.
+* **`set_title(title: str) -> None`**
+  Updates the header title.
+
+#### Styling & Appearance
+* **`set_header_style(...) -> None`**
+  Customizes the header frame:
+  `background_color`, `text_color`, `border_color`, `border_width`, `border_radius`, `padding_vertical`, `padding_horizontal`, `font_size`, `font_weight`, `hover_color`.
+* **`set_chevron_icons(collapsed_icon, expanded_icon) -> None`**
+  Accepts strings (glyphs like `"▸"`, `"▾"` or file paths like `"icon.svg"`) or `QIcon` objects.
+* **`set_card_style(background, border, radius, padding, shadow_only) -> None`**
+  Styles the expanded content container scroll area.
+* **`set_card_shadow(color, blur, offset_y) -> None`**
+  Adds a soft drop shadow beneath the content area.
+* **`set_content_text_style(color, font_size) -> None`**
+  Applies uniform typography styling to text inside the content area.
+* **`set_title_style(color, font_size, font_weight, italic) -> None`**
+  Fine-tunes header title typography.
+* **`set_item_count(count: Optional[int], show_badge: bool = True) -> None`**
+  Displays or hides a numeric count badge.
+* **`set_item_badge_style(...) -> None`**
+  Styles the badge: `text`, `bg_color`, `text_color`, `border_color`, `border_radius`, `padding_vertical`, `padding_horizontal`, `font_size`, `font_weight`, `shadow`, `min_width`.
+* **`apply_theme(theme: Union[str, dict]) -> None`**
+  Applies a built-in theme (`"dark"`, `"light"`, `"indigo"`, `"slate"`) or custom token dictionary.
+* **`set_max_content_height(max_height: Optional[int]) -> None`**
+  Sets maximum height constraint for expanded content before scrollbars appear.
+
+---
+
+### Stylesheet (QSS) Theming
+
+Every component has standardized Qt object names for direct QSS customization:
+
+```css
+CollapsiblePane {
+    background: transparent;
+}
+QFrame#header_frame {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+}
+QFrame#header_frame:hover {
+    background-color: #283548;
+}
+QLabel#title_label {
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+}
+QLabel#chevron_label {
+    color: #94a3b8;
+}
+QLabel#count_label {
+    background-color: rgba(99, 102, 241, 0.18);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 10px;
+    padding: 2px 8px;
+}
+QScrollArea#content_area {
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+}
+```
+
+---
 
 ### Signals
 
-- `toggled(bool)` — emits when pane expands or collapses
+* **`toggled(bool)`**: Emits `True` when expanded and `False` when collapsed.
 
 ---
 
-## Changelog
+## Running the Demo
 
-* Added full header customization (`set_header_style`)
-* Added chevron icon customization (`set_chevron_icons`)
-* Added card-style content area (`set_card_style`)
-* Added item count badges with styling API
-* Added title-level text customization
-* Added content text styling
-* Added programmatic expand/collapse methods
-* Added `set_content_widget()` API
-* Added initial collapsed state support
+Clone the repository and run:
 
-**New Contributor:**
-
-* **[Muhammad Awais Saleem](https://github.com/mawaissaleem)**
+```bash
+python example.py
+```
 
 ---
-## Contributions
-For contributions please visit [Github Repository](https://github.com/mjk22071998/CollapsiblePane)
 
+## Running Tests
+
+Run the test suite using `unittest` or `pytest`:
+
+```bash
+python -m unittest discover tests/
+# or
+pytest
+```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

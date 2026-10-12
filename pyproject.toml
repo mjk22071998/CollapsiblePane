@@ -1,21 +1,60 @@
-[project]
-name = "collapsiblepane"
-version = "0.10.3"
-description = "A PySide6 widget for collapsible panels, inspired by JavaFX's TitledPane"
-readme = "README.md"
-license = "MIT"
-authors = [
-    {name = "Muhammad Junaid Khalid", email = "mjk22071998@gmail.com"}
-]
-dependencies = ["PySide6>=6.0"]
-
-[project.urls]
-Homepage = "https://github.com/mjk22071998/CollapsiblePane"
-Repository = "https://github.com/mjk22071998/CollapsiblePane"
-
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["collapsiblepane"]
+[project]
+name = "collapsiblepane"
+version = "0.10.4"
+description = "A sleek, customizable PySide6 widget for collapsible panels, inspired by JavaFX's TitledPane."
+readme = "README.MD"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Muhammad Junaid Khalid", email = "mjk22071998@gmail.com" }
+]
+maintainers = [
+    { name = "Muhammad Junaid Khalid", email = "mjk22071998@gmail.com" }
+]
+keywords = [
+    "pyside6",
+    "qt",
+    "collapsible",
+    "titledpane",
+    "accordion",
+    "gui",
+    "widget",
+    "desktop"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Software Development :: Widget Sets",
+]
+dependencies = [
+    "PySide6>=6.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-qt"
+]
+
+[project.urls]
+Homepage = "https://github.com/mjk22071998/CollapsiblePane"
+Repository = "https://github.com/mjk22071998/CollapsiblePane"
+Issues = "https://github.com/mjk22071998/CollapsiblePane/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["collapsiblepane*"]
