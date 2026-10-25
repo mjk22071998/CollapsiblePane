@@ -264,13 +264,13 @@ QScrollArea#content_area {
 Run the standard demo:
 
 ```bash
-python example.py
+python examples/example.py
 ```
 
 Run the authentic JavaFX TitledPane & Accordion showcase:
 
 ```bash
-python javafx_example.py
+python examples/javafx_example.py
 ```
 
 ---

@@ -10,6 +10,11 @@ Demonstrates:
 """
 
 import sys
+from pathlib import Path
+
+# Ensure package root is in sys.path when running from source
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QRadioButton,
