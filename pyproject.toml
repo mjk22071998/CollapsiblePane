@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "collapsiblepane"
-version = "0.11.0"
+version = "0.12.0"
 description = "A sleek, customizable PySide6 widget for collapsible panels, inspired by JavaFX's TitledPane."
 readme = "README.MD"
 requires-python = ">=3.8"
